@@ -69,7 +69,7 @@ export default function AdminPanel() {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
-        <header className="bg-white shadow-sm">
+        {/* <header className="bg-white shadow-sm">
           <div className="flex items-center justify-between px-4 py-2">
             <h2 className="text-xl font-semibold">
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
@@ -110,7 +110,7 @@ export default function AdminPanel() {
               </DropdownMenu>
             </div>
           </div>
-        </header>
+        </header> */}
 
         {/* Content */}
         <div className="p-6">

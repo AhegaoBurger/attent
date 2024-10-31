@@ -53,13 +53,13 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/admin/dashboard",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
           title: "History",
-          url: "#",
+          url: "/admin/dashboard",
         },
         {
           title: "Starred",
@@ -73,12 +73,12 @@ const data = {
     },
     {
       title: "Products",
-      url: "#",
+      url: "/admin/products",
       icon: Bot,
       items: [
         {
           title: "Genesis",
-          url: "#",
+          url: "/admin/products",
         },
         {
           title: "Explorer",
@@ -92,12 +92,12 @@ const data = {
     },
     {
       title: "Orders",
-      url: "#",
+      url: "/admin/orders",
       icon: BookOpen,
       items: [
         {
           title: "Introduction",
-          url: "#",
+          url: "/admin/orders",
         },
         {
           title: "Get Started",
