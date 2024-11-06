@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { categories } from "@/lib/categories";
 import { CategoryHeader } from "@/components/category-header";
 import { ProductGrid } from "@/components/product-grid";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/client";
 
 export const metadata: Metadata = {
   title: "Браслеты | Attent",
@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BraceletsPage() {
+  const supabase = createClient();
+
   const { data: products } = await supabase
     .from("products")
     .select("*")

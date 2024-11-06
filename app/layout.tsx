@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
-// import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 // import Navbar from "@/components/navbar";
 // import { Toaster } from "@/components/ui/toaster";
 
@@ -20,15 +20,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={playfair.className}>
-        {/* <ThemeProvider
+        <ThemeProvider
           attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-          <Navbar /> */}
-        <main className="min-h-screen bg-background">{children}</main>
-        {/* <Toaster />
-        </ThemeProvider> */}
+          {/* <Navbar /> */}
+          <main className="min-h-screen bg-background">{children}</main>
+          {/* <Toaster /> */}
+        </ThemeProvider>
       </body>
     </html>
   );

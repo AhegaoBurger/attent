@@ -8,7 +8,7 @@ interface CategoryHeaderProps {
 
 export function CategoryHeader({ category }: CategoryHeaderProps) {
   return (
-    <div className="border-b bg-white sticky top-0 z-10">
+    <div className="border-b sticky top-0 z-10">
       <div className="flex items-center px-6 py-4 max-w-7xl mx-auto">
         <Link
           href="/"
