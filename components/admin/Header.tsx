@@ -1,6 +1,6 @@
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NavUser } from "./nav-user";
+import { NavUser } from "@/components/admin/nav/nav-user";
 
 interface HeaderProps {
   user: {
