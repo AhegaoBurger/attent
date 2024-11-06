@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { createClient } from "@/utils/supabase/client";
+import { Product } from "@/lib/admin/types";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -46,11 +46,12 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
   onSuccess: () => void;
+  onAddProduct: (
+    product: Omit<Product, "id">,
+  ) => Promise<{ data: any; error: any }>;
 }
 
-export function ProductForm({ onSuccess }: ProductFormProps) {
-  const supabase = createClient();
-
+export function ProductForm({ onSuccess, onAddProduct }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
 
   const form = useForm<ProductFormValues>({
@@ -67,12 +68,10 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
   async function onSubmit(data: ProductFormValues) {
     setLoading(true);
     try {
-      const { error } = await supabase.from("products").insert([
-        {
-          ...data,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      const { error } = await onAddProduct({
+        ...data,
+        created_at: new Date().toISOString(),
+      });
 
       if (error) throw error;
 

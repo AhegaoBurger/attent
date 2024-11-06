@@ -33,14 +33,50 @@ export function useProducts() {
     }
   }
 
+  async function addProduct(product: Omit<Product, "id">) {
+    // Add optimistically to the UI
+    const optimisticProduct = {
+      ...product,
+      id: crypto.randomUUID(), // Temporary ID
+    };
+
+    setProducts((prev) => [optimisticProduct, ...prev]);
+
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .insert([product])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update with the real product from the database
+      setProducts((prev) =>
+        prev.map((p) => (p.id === optimisticProduct.id ? data : p)),
+      );
+
+      return { data, error: null };
+    } catch (error) {
+      // Revert optimistic update on error
+      setProducts((prev) => prev.filter((p) => p.id !== optimisticProduct.id));
+      console.error("Error adding product:", error);
+      return { data: null, error };
+    }
+  }
+
   async function deleteProduct(id: string) {
+    // Optimistically remove from UI
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+
     try {
       const { error } = await supabase.from("products").delete().eq("id", id);
 
       if (error) throw error;
-      await fetchProducts();
     } catch (error) {
+      // Revert on error
       console.error("Error deleting product:", error);
+      await fetchProducts();
     }
   }
 
@@ -54,6 +90,7 @@ export function useProducts() {
     searchQuery,
     setSearchQuery,
     deleteProduct,
+    addProduct,
     refetch: fetchProducts,
   };
 }

@@ -41,6 +41,7 @@ export default function AdminPanel() {
     searchQuery: productSearch,
     setSearchQuery: setProductSearch,
     deleteProduct,
+    addProduct,
   } = useProducts();
   const {
     orders,
@@ -166,8 +167,7 @@ export default function AdminPanel() {
                       value={productSearch}
                       onChange={(e) => setProductSearch(e.target.value)}
                     />
-                    {/* <Button>Add New Product</Button> */}
-                    <AddProductDialog />
+                    <AddProductDialog onAddProduct={addProduct} />
                   </div>
                   <Table>
                     <TableHeader>

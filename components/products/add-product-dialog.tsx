@@ -10,8 +10,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ProductForm } from "@/components/products/product-form";
+import { Product } from "@/lib/admin/types";
 
-export function AddProductDialog() {
+interface AddProductDialogProps {
+  onAddProduct: (
+    product: Omit<Product, "id">,
+  ) => Promise<{ data: any; error: any }>;
+}
+
+export function AddProductDialog({ onAddProduct }: AddProductDialogProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -23,7 +30,10 @@ export function AddProductDialog() {
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
         </DialogHeader>
-        <ProductForm onSuccess={() => setOpen(false)} />
+        <ProductForm
+          onSuccess={() => setOpen(false)}
+          onAddProduct={onAddProduct}
+        />
       </DialogContent>
     </Dialog>
   );
