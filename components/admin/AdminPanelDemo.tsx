@@ -9,15 +9,12 @@ import {
   ShoppingCart,
   Users,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -30,9 +27,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useStats } from "@/hooks/use-stats";
+import { useProducts } from "@/hooks/use-products";
+import { useOrders } from "@/hooks/use-orders";
+import { AddProductDialog } from "@/components/products/add-product-dialog";
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { stats, loading: statsLoading } = useStats();
+  const {
+    products,
+    loading: productsLoading,
+    searchQuery: productSearch,
+    setSearchQuery: setProductSearch,
+    deleteProduct,
+  } = useProducts();
+  const {
+    orders,
+    loading: ordersLoading,
+    searchQuery: orderSearch,
+    setSearchQuery: setOrderSearch,
+    statusFilter,
+    setStatusFilter,
+  } = useOrders();
 
   return (
     <div className="flex h-screen">
@@ -65,9 +82,7 @@ export default function AdminPanel() {
         </nav>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        {/* Content */}
         <div className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsContent value="dashboard">
@@ -80,9 +95,11 @@ export default function AdminPanel() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">$45,231.89</div>
+                    <div className="text-2xl font-bold">
+                      ${statsLoading ? "..." : stats?.total_revenue.toFixed(2)}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      +20.1% from last month
+                      {stats?.revenue_change.toFixed(1)}% from last month
                     </p>
                   </CardContent>
                 </Card>
@@ -94,9 +111,11 @@ export default function AdminPanel() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">+2350</div>
+                    <div className="text-2xl font-bold">
+                      +{statsLoading ? "..." : stats?.new_customers}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      +180.1% from last month
+                      {stats?.customers_change}% from last month
                     </p>
                   </CardContent>
                 </Card>
@@ -108,9 +127,11 @@ export default function AdminPanel() {
                     <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">+12,234</div>
+                    <div className="text-2xl font-bold">
+                      +{statsLoading ? "..." : stats?.total_orders}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      +19% from last month
+                      {stats?.orders_change}% from last month
                     </p>
                   </CardContent>
                 </Card>
@@ -122,9 +143,11 @@ export default function AdminPanel() {
                     <Package className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">573</div>
+                    <div className="text-2xl font-bold">
+                      {statsLoading ? "..." : stats?.products_in_stock}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      +201 since last week
+                      {stats?.stock_change}% since last week
                     </p>
                   </CardContent>
                 </Card>
@@ -140,8 +163,11 @@ export default function AdminPanel() {
                     <Input
                       className="max-w-sm"
                       placeholder="Search products..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
                     />
-                    <Button>Add New Product</Button>
+                    {/* <Button>Add New Product</Button> */}
+                    <AddProductDialog />
                   </div>
                   <Table>
                     <TableHeader>
@@ -154,42 +180,32 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow>
-                        <TableCell>Diamond Necklace</TableCell>
-                        <TableCell>Necklaces</TableCell>
-                        <TableCell>$1,999.99</TableCell>
-                        <TableCell>15</TableCell>
-                        <TableCell>
-                          <Button variant="ghost">Edit</Button>
-                          <Button variant="ghost" className="text-red-500">
-                            Delete
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Gold Bracelet</TableCell>
-                        <TableCell>Bracelets</TableCell>
-                        <TableCell>$799.99</TableCell>
-                        <TableCell>28</TableCell>
-                        <TableCell>
-                          <Button variant="ghost">Edit</Button>
-                          <Button variant="ghost" className="text-red-500">
-                            Delete
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Pearl Earrings</TableCell>
-                        <TableCell>Earrings</TableCell>
-                        <TableCell>$249.99</TableCell>
-                        <TableCell>42</TableCell>
-                        <TableCell>
-                          <Button variant="ghost">Edit</Button>
-                          <Button variant="ghost" className="text-red-500">
-                            Delete
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                      {productsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        products.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>{product.name}</TableCell>
+                            <TableCell>{product.category}</TableCell>
+                            <TableCell>${product.price}</TableCell>
+                            <TableCell>{product.stock}</TableCell>
+                            <TableCell>
+                              <Button variant="ghost">Edit</Button>
+                              <Button
+                                variant="ghost"
+                                className="text-red-500"
+                                onClick={() => deleteProduct(product.id)}
+                              >
+                                Delete
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -205,6 +221,8 @@ export default function AdminPanel() {
                     <Input
                       className="max-w-sm"
                       placeholder="Search orders..."
+                      value={orderSearch}
+                      onChange={(e) => setOrderSearch(e.target.value)}
                     />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -214,11 +232,31 @@ export default function AdminPanel() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem>All Orders</DropdownMenuItem>
-                        <DropdownMenuItem>Pending</DropdownMenuItem>
-                        <DropdownMenuItem>Processing</DropdownMenuItem>
-                        <DropdownMenuItem>Shipped</DropdownMenuItem>
-                        <DropdownMenuItem>Delivered</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("all")}
+                        >
+                          All Orders
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("pending")}
+                        >
+                          Pending
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("processing")}
+                        >
+                          Processing
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("shipped")}
+                        >
+                          Shipped
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("delivered")}
+                        >
+                          Delivered
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -234,48 +272,44 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow>
-                        <TableCell>#1234</TableCell>
-                        <TableCell>John Doe</TableCell>
-                        <TableCell>2023-05-15</TableCell>
-                        <TableCell>$2,499.99</TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                            Delivered
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost">View</Button>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>#1235</TableCell>
-                        <TableCell>Jane Smith</TableCell>
-                        <TableCell>2023-05-16</TableCell>
-                        <TableCell>$899.99</TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                            Processing
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost">View</Button>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>#1236</TableCell>
-                        <TableCell>Robert Johnson</TableCell>
-                        <TableCell>2023-05-17</TableCell>
-                        <TableCell>$1,299.99</TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                            Shipped
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost">View</Button>
-                        </TableCell>
-                      </TableRow>
+                      {ordersLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        orders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell>#{order.id.slice(0, 8)}</TableCell>
+                            <TableCell>{order.customer_name}</TableCell>
+                            <TableCell>
+                              {new Date(order.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>${order.total.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                              ${
+                                order.status === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.status === "processing"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : order.status === "shipped"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-gray-100 text-gray-800"
+                              }`}
+                              >
+                                {order.status.charAt(0).toUpperCase() +
+                                  order.status.slice(1)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost">View</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>

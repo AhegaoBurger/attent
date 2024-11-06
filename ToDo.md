@@ -1,0 +1,1 @@
+- [ ] When the product is added it needs to be updated in ui immediately, either with an optimistic update or a realtime update
