@@ -58,8 +58,8 @@ export function ProductForm({ onSuccess, onAddProduct }: ProductFormProps) {
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
-      price: "",
-      stock: "",
+      price: 0,
+      stock: 0,
       image: "",
       description: "",
     },
@@ -75,18 +75,15 @@ export function ProductForm({ onSuccess, onAddProduct }: ProductFormProps) {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
+      toast.message("Success", {
         description: "Product has been added successfully",
       });
 
       onSuccess();
     } catch (error) {
       console.error("Error adding product:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to add product. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);

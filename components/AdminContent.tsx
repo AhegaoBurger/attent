@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { Header } from "@/components/Header";
+import { Header } from "@/components/admin/Header";
 // import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
