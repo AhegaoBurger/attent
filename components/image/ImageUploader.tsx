@@ -137,4 +137,4 @@ const ImageUploader = ({
   );
 };
 
-export default ProductImageUpload;
+export default ImageUploader;
