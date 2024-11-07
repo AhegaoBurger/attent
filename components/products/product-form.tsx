@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Product } from "@/lib/admin/types";
+import ImageUploader from "@/components/image/ImageUploader";
+import { createClient } from "@/utils/supabase/client";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -158,7 +160,32 @@ export function ProductForm({ onSuccess, onAddProduct }: ProductFormProps) {
               <FormItem>
                 <FormLabel>Stock</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="10" {...field} />
+                  <ImageUploader
+                    value={field.value}
+                    onChange={field.onChange}
+                    onUpload={async (file) => {
+                      // Replace this with your actual upload logic
+                      // Example using Supabase:
+                      const supabase = createClient();
+
+                      const fileExt = file.name.split(".").pop();
+                      const fileName = `${Math.random()}.${fileExt}`;
+
+                      const { data, error } = await supabase.storage
+                        .from("products")
+                        .upload(fileName, file);
+
+                      if (error) throw error;
+
+                      const {
+                        data: { publicUrl },
+                      } = supabase.storage
+                        .from("products")
+                        .getPublicUrl(fileName);
+
+                      return { url: publicUrl };
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

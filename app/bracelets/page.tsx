@@ -18,6 +18,8 @@ export default async function BraceletsPage() {
     .eq("category", "bracelets")
     .order("created_at", { ascending: false });
 
+  console.log("Products", products);
+
   return (
     <div>
       <CategoryHeader category={categories.bracelets} />
