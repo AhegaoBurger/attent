@@ -200,7 +200,7 @@ export function ProductForm({ onSuccess, onAddProduct }: ProductFormProps) {
 
                     return { url: publicUrl };
                   }}
-                />{" "}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
