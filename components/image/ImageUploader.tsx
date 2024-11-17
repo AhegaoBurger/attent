@@ -1,68 +1,120 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { Camera, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
-interface ProductImageUploadProps {
-  onChange: (url: string) => void;
+interface ImageUploaderProps {
   value?: string;
-  onUpload?: (file: File) => Promise<{ url: string }>;
+  onChange: (path: string) => void;
 }
 
-const ImageUploader = ({
-  onChange,
-  value,
-  onUpload,
-}: ProductImageUploadProps) => {
+const ImageUploader = ({ onChange, value }: ImageUploaderProps) => {
+  const supabase = createClient();
   const [isUploading, setIsUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  // Download and create object URL for image preview
+  useEffect(() => {
+    let mounted = true;
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File too large", {
-        description: "Please select an image under 5MB.",
-      });
-      return;
-    }
+    const downloadImage = async (path: string) => {
+      try {
+        const { data, error } = await supabase.storage
+          .from("products")
+          .download(path);
 
-    setIsUploading(true);
+        if (error) throw error;
+        if (!mounted) return;
 
-    try {
-      if (onUpload) {
-        const { url } = await onUpload(file);
-        onChange(url);
-        toast.success("Image uploaded successfully");
+        const url = URL.createObjectURL(data);
+        setImageUrl(url);
+      } catch (error) {
+        console.error("Error downloading image:", error);
+        toast.error("Failed to load image");
       }
+    };
+
+    if (value) downloadImage(value);
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [value, supabase]);
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setIsUploading(true);
+
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error("You must select an image to upload.");
+      }
+
+      const file = event.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("File size must be less than 5MB");
+      }
+
+      // Generate random file name
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+
+      // Upload to Supabase
+      const { error: uploadError } = await supabase.storage
+        .from("products")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Store the path (not the URL)
+      onChange(fileName);
+      toast.success("Image uploaded successfully");
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Upload failed", {
-        description:
-          "There was a problem uploading your image. Please try again.",
-      });
+      toast.error(
+        error instanceof Error ? error.message : "Error uploading image",
+      );
     } finally {
       setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
-  const handleRemove = () => {
-    onChange("");
-    // Reset the input value to allow uploading the same file again
-    const input = document.getElementById(
-      "product-image-upload",
-    ) as HTMLInputElement;
-    if (input) input.value = "";
+  const handleRemove = async () => {
+    try {
+      if (value) {
+        const { error } = await supabase.storage
+          .from("products")
+          .remove([value]);
+
+        if (error) throw error;
+      }
+
+      // Clear the image
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+        setImageUrl(null);
+      }
+      onChange("");
+      toast.success("Image removed successfully");
+    } catch (error) {
+      console.error("Error removing image:", error);
+      toast.error("Failed to remove image");
+    }
+  };
+
+  // Handle button click to trigger file input
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -71,10 +123,10 @@ const ImageUploader = ({
         <div className="relative">
           {/* Image Preview */}
           <div className="relative w-[200px] h-[200px] rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200">
-            {value ? (
+            {imageUrl ? (
               <>
                 <Image
-                  src={value}
+                  src={imageUrl}
                   alt="Product image"
                   fill
                   className="object-cover"
@@ -82,6 +134,7 @@ const ImageUploader = ({
                   priority
                 />
                 <Button
+                  type="button"
                   variant="destructive"
                   size="icon"
                   className="absolute top-2 right-2 h-6 w-6 rounded-full"
@@ -97,13 +150,14 @@ const ImageUploader = ({
             )}
           </div>
 
-          {/* Upload Button */}
-          <label htmlFor="product-image-upload">
+          {/* Upload Button and Input */}
+          <div className="absolute bottom-2 right-2">
             <Button
-              variant="secondary"
-              className="absolute bottom-2 right-2 h-8 rounded-md"
-              disabled={isUploading}
               type="button"
+              variant="secondary"
+              className="h-8 rounded-md"
+              disabled={isUploading}
+              onClick={handleButtonClick}
             >
               {isUploading ? (
                 <>
@@ -117,16 +171,15 @@ const ImageUploader = ({
                 </>
               )}
             </Button>
-          </label>
-
-          <input
-            id="product-image-upload"
-            type="file"
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleUpload}
+              disabled={isUploading}
+              className="hidden"
+            />
+          </div>
         </div>
       </div>
 

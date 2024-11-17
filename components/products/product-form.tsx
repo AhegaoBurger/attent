@@ -40,7 +40,7 @@ const productSchema = z.object({
     .string()
     .min(1, "Stock is required")
     .transform((val) => parseInt(val)),
-  image: z.string().url("Please enter a valid image URL"),
+  image: z.string().min(1, "Image is required"),
   description: z.string().optional(),
 });
 
@@ -175,32 +175,7 @@ export function ProductForm({ onSuccess, onAddProduct }: ProductFormProps) {
             <FormItem>
               <FormLabel>Image URL</FormLabel>
               <FormControl>
-                <ImageUploader
-                  value={field.value}
-                  onChange={field.onChange}
-                  onUpload={async (file) => {
-                    // Replace this with your actual upload logic
-                    // Example using Supabase:
-                    const supabase = createClient();
-
-                    const fileExt = file.name.split(".").pop();
-                    const fileName = `${Math.random()}.${fileExt}`;
-
-                    const { data, error } = await supabase.storage
-                      .from("products")
-                      .upload(fileName, file);
-
-                    if (error) throw error;
-
-                    const {
-                      data: { publicUrl },
-                    } = supabase.storage
-                      .from("products")
-                      .getPublicUrl(fileName);
-
-                    return { url: publicUrl };
-                  }}
-                />
+                <ImageUploader value={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>

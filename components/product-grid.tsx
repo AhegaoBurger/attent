@@ -1,11 +1,80 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Product } from "@/types";
+import { createClient } from "@/utils/supabase/client";
+
+interface ProductCardImageProps {
+  path: string;
+  alt: string;
+}
+
+// Separate component for handling image loading
+const ProductCardImage = ({ path, alt }: ProductCardImageProps) => {
+  const supabase = createClient();
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const downloadImage = async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from("products")
+          .download(path);
+
+        if (error) throw error;
+        if (!mounted) return;
+
+        const url = URL.createObjectURL(data);
+        setImageUrl(url);
+      } catch (error) {
+        console.error("Error downloading image:", error);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    downloadImage();
+
+    return () => {
+      mounted = false;
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [path, supabase]);
+
+  if (isLoading) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!imageUrl) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+        <span className="text-sm text-gray-500">Failed to load image</span>
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={imageUrl}
+      alt={alt}
+      fill
+      className="object-cover transition-transform group-hover:scale-105"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+    />
+  );
+};
 
 interface ProductGridProps {
   products: Product[];
@@ -18,12 +87,7 @@ export function ProductGrid({ products }: ProductGridProps) {
         <Card key={product.id} className="group relative">
           <CardContent className="p-0">
             <div className="relative aspect-square">
-              <Image
-                src={product.image}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-              />
+              <ProductCardImage path={product.image} alt={product.name} />
               <Button
                 variant="ghost"
                 size="icon"
