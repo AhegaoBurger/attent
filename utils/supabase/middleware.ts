@@ -7,6 +7,7 @@ const publicPaths = [
   "/auth",
   "/reset-password",
   "/forgot-password",
+  "/",
   // Add any other public paths here
 ];
 
